@@ -31,6 +31,7 @@
 - [Available Scripts](#-available-scripts)
 - [Design Decisions](#-design-decisions)
 - [Component Reference](#-component-reference)
+- [Blog System](#-blog-system)
 - [3D Assets & Credits](#-3d-assets--credits)
 - [Deployment](#-deployment)
 - [Performance Optimization](#-performance-optimization)
@@ -47,7 +48,7 @@ A premium, space-themed developer portfolio that blends **3D WebGL rendering**, 
 
 ## Live Demo
 
-> _Coming soon — deploy to [Vercel](https://vercel.com), [Netlify](https://netlify.com), or [GitHub Pages](https://pages.github.com)._
+> [https://pushkarshinde.vercel.app](https://pushkarshinde.vercel.app/)
 
 ---
 
@@ -68,6 +69,7 @@ A premium, space-themed developer portfolio that blends **3D WebGL rendering**, 
 | **Scroll-Driven Timeline** | Work experience timeline with scroll-progress gradient indicator |
 | **Contact Form** | Glassmorphic form with EmailJS integration, shimmer effects, and form validation |
 | **Copy-to-Clipboard** | One-click email copy button with animated success state |
+| **Blog System** | Markdown-powered blog with category filters, search, syntax-highlighted code blocks, and grid/list views |
 | **Responsive Design** | Fully responsive from mobile to ultra-wide screens |
 
 ---
@@ -83,48 +85,34 @@ A premium, space-themed developer portfolio that blends **3D WebGL rendering**, 
               ▼
 ┌─────────────────────────────────────────────────────────┐
 │                    main.jsx                             │
-│              (React DOM Root)                           │
-└─────────────┬───────────────────────────────────────────┘
-              │
-              ▼
-┌─────────────────────────────────────────────────────────┐
-│                     App.jsx                             │
-│              (Section Orchestrator)                     │
-├─────────────────────────────────────────────────────────┤
-│  Navbar │ Hero │ About │ Projects │ Experiences │       │
-│  Testimonial │ Contact │ Footer                        │
-└────────┬─────┬──────┬───────┬──────┬──────┬─────┬──────┘
-         │     │      │       │      │      │     │
-         ▼     ▼      ▼       ▼      ▼      ▼     ▼
-    ┌──────────────────────────────────────────────────┐
-    │              Components Layer                     │
-    ├──────────────────────────────────────────────────┤
-    │  Astronaut (3D)  │  ParallaxBackground           │
-    │  HeroText        │  FlipWords                    │
-    │  Globe (COBE)    │  SocialConstellation          │
-    │  Frameworks      │  OrbitingCircles              │
-    │  Project         │  ProjectDetails (Modal)       │
-    │  Timeline        │  Marquee                      │
-    │  Particles       │  ShootingStars                │
-    │  CopyEmailButton │  Alert                        │
-    │  Card            │  Loader                       │
-    └──────────────────────────────────────────────────┘
-              │
-              ▼
-    ┌──────────────────────────────────────────────────┐
-    │            Constants / Data Layer                  │
-    ├──────────────────────────────────────────────────┤
-    │  myProjects  │  mySocials  │  experiences        │
-    │  reviews     │  SOCIAL_LINKS                     │
-    └──────────────────────────────────────────────────┘
+│          (React DOM Root + BrowserRouter)               │
+└────────┬──────────────────┬──────────────┬──────────────┘
+         │                  │              │
+    Route /            Route /blogs   Route /blogs/:slug
+         │                  │              │
+         ▼                  ▼              ▼
+┌─────────────────┐ ┌──────────────┐ ┌──────────────┐
+│     App.jsx     │ │ BlogListing  │ │  BlogPost    │
+│ (Home Sections) │ │    Page      │ │    Page      │
+├─────────────────┤ ├──────────────┤ ├──────────────┤
+│  Navbar │ Hero  │ │ Navbar       │ │ Navbar       │
+│  About│Projects │ │ BlogHero     │ │ PostHeader   │
+│  Experiences    │ │ SearchBar    │ │ PostContent  │
+│  Contact│Footer │ │ CategoryPills│ │ MorePosts    │
+└─────────────────┘ │ BlogCard Grid│ │ Footer       │
+                    │ Pagination   │ └──────────────┘
+                    │ Footer       │
 ```
 
 ### Data Flow
 
 ```mermaid
 graph TD
-    A[index.html] --> B[main.jsx]
-    B --> C[App.jsx]
+    A[index.html] --> B["main.jsx (BrowserRouter)"]
+    B -->|"Route /"| C[App.jsx]
+    B -->|"Route /blogs"| BL[BlogListingPage]
+    B -->|"Route /blogs/:slug"| BP[BlogPostPage]
+
     C --> D[Navbar]
     C --> E[Hero]
     C --> F[About]
@@ -147,14 +135,24 @@ graph TD
     G1 --> G2["ProjectDetails (Modal)"]
 
     H --> H1[Timeline]
-
     I --> I1[Marquee]
 
     J --> J1[Particles]
     J --> J2[ShootingStars]
     J --> J3["EmailJS (External)"]
 
-    K --> K1["mySocials (constants)"]
+    BL --> BL1[BlogHero]
+    BL --> BL2[SearchBar + CategoryPills]
+    BL --> BL3[BlogCard Grid]
+    BL --> BL4[Pagination]
+
+    BP --> BP1[BlogPostHeader]
+    BP --> BP2["BlogPostContent (react-markdown)"]
+    BP --> BP3[MorePosts]
+
+    MD["content/blog/*.md"] -->|"import.meta.glob"| LOADER[blogLoader.js]
+    LOADER --> BL
+    LOADER --> BP
 ```
 
 ---
@@ -189,6 +187,16 @@ graph TD
 | **tailwind-merge** | 3.6.0 | Intelligent Tailwind class merging |
 | **react-responsive** | 10.0.1 | Media query hooks for responsive logic |
 
+### Blog & Routing
+| Technology | Version | Purpose |
+|---|---|---|
+| **react-router-dom** | 7.x | Client-side routing (homepage, blog listing, blog posts) |
+| **react-markdown** | 10.x | Markdown to React component rendering |
+| **front-matter** | 4.x | Browser-safe YAML frontmatter parsing |
+| **remark-gfm** | 4.x | GitHub Flavored Markdown support (tables, strikethrough) |
+| **rehype-highlight** | 7.x | Syntax highlighting for code blocks |
+| **rehype-raw** | 7.x | Raw HTML support in markdown |
+
 ### Dev Tools
 | Technology | Version | Purpose |
 |---|---|---|
@@ -214,8 +222,29 @@ MyPortfolio/
 │   ├── models/
 │   │   └── tenhun_falling_spaceman_fanart.glb  # 3D astronaut model (~2.9MB)
 │   └── vite.svg
+├── content/
+│   └── blog/                  # Markdown blog posts (add new .md files here)
+│       └── building-scalable-microservices.md
 ├── src/
 │   ├── components/
+│   │   ├── blog/              # Blog-specific components
+│   │   │   ├── icons/         # Category SVG icon components
+│   │   │   │   ├── BackendIcon.jsx
+│   │   │   │   ├── CareerIcon.jsx
+│   │   │   │   ├── CompetitiveIcon.jsx
+│   │   │   │   ├── DefaultIcon.jsx
+│   │   │   │   ├── DevOpsIcon.jsx
+│   │   │   │   ├── DistributedIcon.jsx
+│   │   │   │   └── categoryIconMap.js
+│   │   │   ├── BlogCard.jsx
+│   │   │   ├── BlogHero.jsx
+│   │   │   ├── BlogPostContent.jsx
+│   │   │   ├── BlogPostHeader.jsx
+│   │   │   ├── CategoryPills.jsx
+│   │   │   ├── MorePosts.jsx
+│   │   │   ├── Pagination.jsx
+│   │   │   ├── SearchBar.jsx
+│   │   │   └── ViewToggle.jsx
 │   │   ├── Alert.jsx           # Toast notification component
 │   │   ├── Astronaut.jsx       # 3D astronaut model (GLTF loader)
 │   │   ├── Card.jsx            # Draggable card component
@@ -234,6 +263,11 @@ MyPortfolio/
 │   │   ├── ShootingStars.jsx   # Canvas shooting star effect
 │   │   ├── SocialConstellation.jsx # Social media badge layout
 │   │   └── Timeline.jsx        # Scroll-driven work timeline
+│   ├── pages/
+│   │   ├── BlogListingPage.jsx # /blogs route
+│   │   └── BlogPostPage.jsx    # /blogs/:slug route
+│   ├── utils/
+│   │   └── blogLoader.js       # Markdown glob loader + frontmatter parser
 │   ├── constants/
 │   │   └── index.js            # Project data, socials, experiences, reviews
 │   ├── sections/
@@ -408,9 +442,144 @@ The About section uses a **5-cell responsive grid** with distinct visual treatme
 | `Card` | `components/Card.jsx` | Draggable card (image or text) |
 | `Loader` | `components/Loader.jsx` | 3D model loading progress display |
 
+### Blog Components
+
+| Component | File | Description |
+|---|---|---|
+| `BlogListingPage` | `pages/BlogListingPage.jsx` | `/blogs` route — composes hero, search, filters, card grid, pagination |
+| `BlogPostPage` | `pages/BlogPostPage.jsx` | `/blogs/:slug` route — centered reading layout with related posts |
+| `BlogHero` | `components/blog/BlogHero.jsx` | "Blogs" heading with subtitle and motion fade-in |
+| `SearchBar` | `components/blog/SearchBar.jsx` | Debounced client-side search with magnifying glass icon |
+| `CategoryPills` | `components/blog/CategoryPills.jsx` | Horizontal scrollable category filter pills |
+| `ViewToggle` | `components/blog/ViewToggle.jsx` | Grid/list view switcher (persists preference to localStorage) |
+| `BlogCard` | `components/blog/BlogCard.jsx` | Post card with grid and list layout variants |
+| `Pagination` | `components/blog/Pagination.jsx` | "Load more" button with post count display |
+| `BlogPostHeader` | `components/blog/BlogPostHeader.jsx` | Post title, metadata row, and back-navigation link |
+| `BlogPostContent` | `components/blog/BlogPostContent.jsx` | Markdown renderer with custom component mappings |
+| `MorePosts` | `components/blog/MorePosts.jsx` | Related posts section at bottom of post page |
+
 ---
 
-## 3D Assets & Credits
+## 📝 Blog System
+
+The portfolio includes a fully integrated, Markdown-powered blog system at `/blogs`.
+
+### How It Works
+
+1. **Content** — Blog posts are plain Markdown files stored in `content/blog/`
+2. **Build-time loading** — Vite's `import.meta.glob` reads all `.md` files at build time (no server or CMS needed)
+3. **Frontmatter parsing** — The [`front-matter`](https://www.npmjs.com/package/front-matter) package extracts metadata (title, date, category, etc.) from each file's YAML header
+4. **Rendering** — [`react-markdown`](https://github.com/remarkjs/react-markdown) renders the body with syntax highlighting via [`rehype-highlight`](https://github.com/rehypejs/rehype-highlight)
+
+### Adding a New Blog Post
+
+**Step 1:** Create a new `.md` file in the `content/blog/` directory:
+
+```bash
+content/blog/your-post-slug.md
+```
+
+**Step 2:** Add the required YAML frontmatter at the top of the file:
+
+```yaml
+---
+title: "Your Post Title"
+date: "2026-07-14"
+category: "Backend Engineering"
+excerpt: "A short summary that appears on the blog card (1-2 sentences)."
+slug: "your-post-slug"
+readTime: "5 min read"
+---
+
+Your markdown content starts here...
+```
+
+**Step 3:** Write your post content below the frontmatter using standard Markdown. The following elements are fully styled:
+
+| Element | Syntax | Rendered As |
+|---|---|---|
+| Headings | `## H2`, `### H3` | Syne font, white, with top margin |
+| Body text | Plain text | DM Sans, neutral-300 |
+| Bold | `**text**` | White, semibold |
+| Italic | `*text*` | DM Sans italic |
+| Code blocks | ` ```java ``` ` | JetBrains Mono, syntax-highlighted, dark bg |
+| Inline code | `` `code` `` | Lime-tinted monospace |
+| Links | `[text](url)` | Lime underline, opens in new tab |
+| Lists | `- item` or `1. item` | Neutral-300 with left padding |
+| Blockquotes | `> text` | Lime left border, italic |
+| Images | `![alt](url)` | Rounded corners, full width |
+| Horizontal rules | `---` | Subtle divider line |
+
+**Step 4:** That's it — restart your dev server (`npm run dev`) or rebuild (`npm run build`). The post will automatically appear on the `/blogs` listing page, sorted by date (newest first).
+
+### Frontmatter Fields Reference
+
+| Field | Required | Description |
+|---|---|---|
+| `title` | ✅ | The post title displayed on cards and the post page |
+| `date` | ✅ | Publication date in `YYYY-MM-DD` format (used for sorting) |
+| `category` | ✅ | Category name — must match a supported category for the icon to appear |
+| `excerpt` | ✅ | Short description shown on blog cards (1-2 sentences) |
+| `slug` | ✅ | URL-safe identifier — the post will be accessible at `/blogs/{slug}` |
+| `readTime` | ✅ | Estimated read time (e.g., `"5 min read"`) |
+
+> **Important:** The `slug` field must be unique across all posts and URL-safe (lowercase, hyphens only, no spaces or special characters).
+
+### Supported Categories
+
+Each category has a custom SVG icon. The following categories are supported out of the box:
+
+| Category | Icon | File |
+|---|---|---|
+| Backend Engineering | Terminal `>_` | `icons/BackendIcon.jsx` |
+| Distributed Systems | Network nodes | `icons/DistributedIcon.jsx` |
+| DevOps | Gear/settings | `icons/DevOpsIcon.jsx` |
+| Career | Briefcase | `icons/CareerIcon.jsx` |
+| Competitive Programming | Code brackets | `icons/CompetitiveIcon.jsx` |
+| _(any other)_ | Document (fallback) | `icons/DefaultIcon.jsx` |
+
+### Adding a New Category
+
+To add a new category with a custom icon:
+
+1. Create a new icon component in `src/components/blog/icons/` (copy `DefaultIcon.jsx` as a template)
+2. Register it in `src/components/blog/icons/categoryIconMap.js`:
+
+```js
+import NewCategoryIcon from './NewCategoryIcon';
+
+export const categoryIconMap = {
+  // ... existing entries
+  'New Category': NewCategoryIcon,
+};
+```
+
+3. Use the exact category name (case-sensitive) in your post's frontmatter
+
+### Blog Tech Stack
+
+| Package | Purpose |
+|---|---|
+| `react-router-dom` | Client-side routing (`/blogs`, `/blogs/:slug`) |
+| `react-markdown` | Markdown → React component rendering |
+| `front-matter` | Browser-safe YAML frontmatter parsing |
+| `remark-gfm` | GitHub Flavored Markdown (tables, strikethrough, etc.) |
+| `rehype-highlight` | Code block syntax highlighting |
+| `rehype-raw` | Allows raw HTML in markdown |
+
+### Blog Typography
+
+The blog uses a dedicated font stack (loaded via Google Fonts in `index.css`):
+
+| Font | Usage |
+|---|---|
+| **Syne** (400–800) | Post titles, section headings |
+| **DM Sans** (400, 500, 700) | Body text, excerpts, UI labels |
+| **JetBrains Mono** (400, 500, 700) | Code blocks, inline code, read time |
+
+---
+
+## 🎨 3D Assets & Credits
 
 | Asset | Author | License | Source |
 |---|---|---|---|
@@ -473,6 +642,8 @@ COPY --from=build /app/dist /usr/share/nginx/html
 EXPOSE 80
 CMD ["nginx", "-g", "daemon off;"]
 ```
+
+> **SPA Routing Note:** Since the app uses `react-router-dom` with `BrowserRouter`, the server must redirect all requests to `index.html`. This is handled automatically by **Vercel** and **Netlify** (with a `_redirects` file or `netlify.toml`). For **nginx**, add `try_files $uri $uri/ /index.html;` to your server block. Without this, direct visits to `/blogs` or `/blogs/your-post` will return a 404.
 
 ---
 
